@@ -78,6 +78,8 @@ Set these in your shell profile:
 
 - `STATE_MD_MAX_LINES` — injection cap (default 80)
 - `STATE_MD_GIT_LOG` — lines of `git log` to include on startup/clear (default 10; `0` disables)
+- `STATE_MD_GRACE_SECONDS` — files written within this many seconds *after* STATE.md count as the same close-out
+  batch and don't trigger the Stop nudge (default 180). Later changes still do.
 
 ## The template
 

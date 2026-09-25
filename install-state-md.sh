@@ -257,6 +257,9 @@ cat > "$HOOKS/state-check.sh" <<'STATE_CHECK_EOF'
 set -u
 
 MAX_LINES="${STATE_MD_MAX_LINES:-80}"
+# Files written within this many seconds AFTER STATE.md belong to the same close-out batch (STATE.md first,
+# then a LAUNCH.md tick or CLAUDE.md note seconds later) and are not a forgotten update. Later changes still fire.
+GRACE="${STATE_MD_GRACE_SECONDS:-180}"
 CACHE="${TMPDIR:-/tmp}/claude-state-md"
 mkdir -p "$CACHE" 2>/dev/null || CACHE="/tmp"
 
@@ -315,11 +318,13 @@ if [ "$in_git" = 1 ]; then
     case "$f" in STATE.md|.DS_Store|*/.DS_Store) continue ;; esac
     [ -e "$root/$f" ] || continue
     fm="$(mtime "$root/$f")"
-    [ "${fm:-0}" -gt "$smt" ] && changed+=("$f")
+    [ "$((${fm:-0} - smt))" -gt "$GRACE" ] && changed+=("$f")
   done < <(git status --porcelain --untracked-files=all 2>/dev/null | sed -E 's/^.. //; s/^.* -> //; s/^"(.*)"$/\1/')
 elif [ -f "$state" ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
+    fm="$(mtime "$f")"
+    [ "$((${fm:-0} - smt))" -gt "$GRACE" ] || continue
     changed+=("${f#"$root"/}")
   done < <(find "$root" \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name env -o -name __pycache__ -o -name site-packages -o -name dist -o -name build -o -name .next -o -name target \) -prune -o -type f -newer "$state" ! -name STATE.md ! -name '.DS_Store' -print 2>/dev/null)
 else
