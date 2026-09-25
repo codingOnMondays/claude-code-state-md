@@ -315,7 +315,7 @@ changed=()
 if [ "$in_git" = 1 ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
-    case "$f" in STATE.md|.DS_Store|*/.DS_Store) continue ;; esac
+    case "$f" in STATE.md|.DS_Store|*/.DS_Store|'~$'*|*/'~$'*) continue ;; esac   # ~$… = Office lock files
     [ -e "$root/$f" ] || continue
     fm="$(mtime "$root/$f")"
     [ "$((${fm:-0} - smt))" -gt "$GRACE" ] && changed+=("$f")
@@ -326,7 +326,7 @@ elif [ -f "$state" ]; then
     fm="$(mtime "$f")"
     [ "$((${fm:-0} - smt))" -gt "$GRACE" ] || continue
     changed+=("${f#"$root"/}")
-  done < <(find "$root" \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name env -o -name __pycache__ -o -name site-packages -o -name dist -o -name build -o -name .next -o -name target \) -prune -o -type f -newer "$state" ! -name STATE.md ! -name '.DS_Store' -print 2>/dev/null)
+  done < <(find "$root" \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name env -o -name __pycache__ -o -name site-packages -o -name dist -o -name build -o -name .next -o -name target \) -prune -o -type f -newer "$state" ! -name STATE.md ! -name '.DS_Store' ! -name '~$*' -print 2>/dev/null)
 else
   # Opted-in project (.state-md-on) with no STATE.md yet: prompt to create one.
   changed+=("(project files)")
